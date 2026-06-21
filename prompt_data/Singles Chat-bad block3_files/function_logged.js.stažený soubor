@@ -1,0 +1,185 @@
+// FUNCTION TO KEEP
+
+systemLoad = function(){
+	$.post('system/action/system_load.php');
+}
+cleanData = function(){
+	if(isStaff(user_rank)){
+		$.post('system/action/system_clean.php', { clean_data: 1 });
+	}
+}
+logOut = function(){
+	$.post('system/action/logout.php', { acu_logout: 1 });
+}
+boomSound = function(snd){
+	if(uSound.match(snd)){ return true; }
+}
+isStaff = function(urank){
+	if(urank >= 70){ return true; }
+}
+betterRank = function(urank){
+	if(user_rank > urank){ return true; }
+}
+previewName = function(c){
+	var n = $('#color_form').attr('data-color');
+	var f = $('#fontitname').val();
+	$('#preview_name').removeClass();
+	$('#preview_name').addClass(n+' '+f);
+}
+previewText = function(){
+	var c = $('#tcolor_form').attr('data-color');
+	var b = $('#boldit').val();
+	var f = $('#fontit').val();
+	$('#preview_text').removeClass();
+	$('#preview_text').addClass(c+' '+b+' '+f);
+}
+appLeftMenu = function(aIcon, aText, aCall, optMenu) {
+	renderLeftMenu(aIcon, aText, aCall, optMenu);
+}
+appSettingMenu = function(aIcon, aText, aCall){
+	renderRightMenu(aIcon, aText, aCall, 'setting_menu_content');
+}
+appLeadMenu = function(aIcon, aText, aCall){
+	renderSideMenu(aIcon, aText, aCall, 'leaderboard_menu_content', 'fmenu_img');
+}
+appGameMenu = function(aIcon, aText, aCall){
+	renderSideMenu(aIcon, aText, aCall, 'game_menu_content', 'fmenu_gimg');
+}
+appAppMenu = function(aIcon, aText, aCall){
+	renderSideMenu(aIcon, aText, aCall, 'app_menu_content', 'fmenu_aimg');
+}
+appStoreMenu = function(aIcon, aText, aCall){
+	renderSideMenu(aIcon, aText, aCall, 'store_menu_content', 'fmenu_simg');
+}
+appToolMenu = function(aIcon, aText, aCall){
+	renderSideMenu(aIcon, aText, aCall, 'tool_menu_content', 'fmenu_timg');
+}
+appHelpMenu = function(aIcon, aText, aCall){
+	renderSideMenu(aIcon, aText, aCall, 'help_menu_content', 'fmenu_himg');
+}
+appPanelMenu = function(icon, text, pCall){
+	var panMenu = '<div title="'+text+'" class="panel_option" onclick="'+pCall+'"><i class="fa fa-'+icon+'"></i></div>';
+	$('#right_panel_bar').append(panMenu);
+}
+appInputMenu = function(mIcon, mCall){
+	var inpMenu = '<div class="sub_options" onclick="'+mCall+'"><img src="'+mIcon+'"/></div>';
+	$('#main_input_extra').append(inpMenu);
+}
+appPrivInputMenu = function(mIcon, mCall){
+	var privInpMenu = '<div class="psub_options" onclick="'+mCall+'"><img src="'+mIcon+'"/></div>';
+	$('#priv_input_extra').append(privInpMenu);
+}
+noDataTemplate = function(){
+	return '<div class="pad_box"><p class="centered_element text_med sub_text">'+system.no_result+'</p></div>';
+}
+
+$(document).ready(function(){
+	systemLoad();
+	setTimeout(cleanData, 5000)
+	var runClean = setInterval(cleanData, 300000);
+
+	$(document).on('click', '.get_info', function(){
+		var profile = $(this).attr('data');
+		getProfile(profile);
+	});
+	$(document).on('click', '.get_finfo', function(){
+		var profile = $(this).attr('data');
+		getProfile(profile);
+	});
+	$(document).on('click', '.open_profile', function(){
+		editProfile();
+	});
+	$(document).on('click', '.get_actions', function(){
+		var id = $(this).attr('data');
+		getActions(id);
+	});
+	$(document).on('click', '.open_same_page', function(){
+		var l = $(this).attr('data');
+		openSamePage(l);
+	});
+	$(document).on('click', '.open_link_page', function(){
+		var l = $(this).attr('data');
+		openLinkPage(l);
+	});
+	$(document).on('click', '.get_room_actions', function(){
+		var id = $(this).attr('data');
+		getRoomActions(id);
+	});
+	$(document).on('click', '.name_choice, .choice', function() {	
+		var curColor = $(this).attr('data');
+		if($('#color_form').attr('data-color') == curColor){
+			$('.bccheck').replaceWith("");
+			$('#color_form').attr('data-color', 'user');
+		}
+		else {
+			$('.bccheck').replaceWith("");
+			$(this).append('<i class="fa fa-check bccheck"></i>');
+			$('#color_form').attr('data-color', curColor);
+		}
+		previewName();
+	});
+	$(document).on('click', '.user_choice', function() {	
+		var curColor = $(this).attr('data');
+		if($('#tcolor_form').attr('data-color') == curColor){
+			$('.bccheck').replaceWith("");
+			$('#tcolor_form').attr('data-color', '');
+		}
+		else {
+			$('.bccheck').replaceWith("");
+			$(this).append('<i class="fa fa-check bccheck"></i>');
+			$('#tcolor_form').attr('data-color', curColor);
+		}
+		previewText();
+	});
+	$(document).on('change', '#fontitname', function(){		
+		previewName();
+	});
+	$(document).on('keydown', function(event) {
+		if( event.which === 8 && event.ctrlKey && event.altKey ) {
+			getConsole();
+		}
+	});
+	$(document).on('click', '#gift_delete', function(){
+		$.post('system/box/gift_delete.php', { 
+			id: $('#view_gift_id').attr('data') 
+		});
+	});
+	$(document).on('click', '.open_gift', function(){
+		$.post('system/box/open_gift.php', { 
+			open_gift: $(this).attr('data')
+		});
+	});
+	$(document).on('click', '.view_gift', function(){
+		const item = $(this);
+		const template = $('#view_gift_template');
+		template.find('#view_gift_title').text(item.attr('data-title'));
+		template.find('#view_gift_img').attr('src', item.attr('data-img'));
+		template.find('#view_gift_id').attr('data', item.attr('data-gift'));
+		topModal(template.html(), 300);
+	});
+	$(document).on('click', '.select_gift', function(){
+		const item = $(this);
+		const template = $('#gift_confirm_template');
+		const method = parseInt(item.attr('data-method'));
+		template.find('.gift_selected').attr('src', item.attr('data-img'));
+		template.find('.gift_title').text(item.attr('data-title'));
+		template.find('.gift_pricing').text(item.attr('data-price'));
+		template.find('.gift_sgold, .gift_sruby').hide();
+		if(method == 1){
+			template.find('.gift_sgold').show();
+		}
+		else if(method == 2){
+			template.find('.gift_sruby').show();
+		}
+		template.find('.gift_send_btn')
+			.attr('data-id', item.attr('data-id'))
+			.attr('data-target', item.attr('data-target'));
+		topModal(template.html(), 360);
+	});
+	$(document).on('click', '.view_friend', function(){
+		$('#view_friend_name').text($(this).attr('data-name'));
+		$('#view_friend_avatar').attr('src', $(this).attr('data-avatar'));
+		$('#view_friend_id').attr('data', $(this).attr('data-id'));
+		overModal($('#view_friend_template').html());
+	});
+});

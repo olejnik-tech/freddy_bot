@@ -16,7 +16,13 @@ The main missing information is the exact CodyChat DOM selector used after login
 
 ## Files
 
-- `src/freddy_bot/chat_watcher.py` - main watcher app
+- `src/freddy_bot/cli.py` - command-line entrypoint
+- `src/freddy_bot/app/watcher.py` - main watch loop
+- `src/freddy_bot/browser/` - Brave/CDP, DOM extraction, inspection, and reply sending
+- `src/freddy_bot/chat/` - chat message parsing, prompt detection, and reply formatting
+- `src/freddy_bot/memory/` - JSONL history, chat context, and per-user memory files
+- `src/freddy_bot/ai/` - prompt building, Codex execution, and reply validation
+- `src/freddy_bot/chat_watcher.py` - compatibility wrapper for older imports
 - `config.example.json` - starter config
 - `scripts/start_brave_debug.ps1` - helper to start Brave in incognito mode with remote debugging
 - `captures/prompts.jsonl` - created automatically when prompts are captured
@@ -146,6 +152,24 @@ If Codex returns a meta-reply like asking for more context, the app rejects it a
 For debugging, the exact prompt sent to Codex is written to `captures/last_codex_prompt.txt`, and the console logs how many characters were loaded from `persona_freddy.md`.
 
 Outgoing replies are addressed deterministically by the script. Codex generates only the reply body, then the app prefixes the detected partner username before sending, for example `BellaVam sounds like a lot, but nice when it is finally coming together.`
+
+## Bot Prevention
+
+The watcher can ignore likely spam users automatically. By default, it only auto-ignores guest/rank-0 users, scores messages for spam patterns such as extreme repeated symbols, then clicks that message's avatar, clicks `Action`, clicks `Ignore`, and refreshes the page.
+
+Tune these keys in `config.json` if the site uses different menu labels or avatar classes:
+
+```json
+"bot_prevention_enabled": true,
+"bot_prevention_min_message_chars": 240,
+"bot_prevention_repeated_count": 2,
+"bot_prevention_guest_rank_only": true,
+"bot_prevention_immediate_score": 8,
+"bot_prevention_repeat_score": 4,
+"user_menu_selectors": [".avatar", ".avtrig", "img", "[class*='avatar']"],
+"user_action_selectors": ["text=Action", "text=Actions"],
+"user_ignore_selectors": ["text=Ignore", "text=Block"]
+```
 
 If replies are generated but not sent, run:
 

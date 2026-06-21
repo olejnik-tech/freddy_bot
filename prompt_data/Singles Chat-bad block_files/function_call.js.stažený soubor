@@ -1,0 +1,112 @@
+openCall = function(id){ 
+	$.post('system/box/call_box.php', { 
+		target: id 
+	});
+}
+initCall = function(t){
+	hideAllModal();
+	hideCallRequest();
+	hideCall();
+	hidePanel();
+	$('#wrap_call').html(t.data);
+	$('.callwidth').css('width', t.w+'px');
+	$('.callheight').css('height', t.h+'px');
+	showCall();
+}
+inCall = function(){
+	return $('#call_pending:visible, #call_request:visible, #container_call:visible').length ? 1 : 0;
+}
+declineCall = function(id){
+	$.post('system/action/action_call.php', { 
+		acu_decline_call: 1, 
+		id: id
+	});
+}
+updateIncomingCall = function(type){
+	if($('#call_request:visible').length){
+		$.post('system/action/action_call.php', { 
+			acu_update_incall: 1,
+			id: $('#callid').val()
+		});	
+	}
+}
+hideCallRequest = function(){
+	$('#call_request').html('').addClass('fhide');
+}
+hideCall = function(){
+	$('#wrap_call').html('');
+	$('#container_call').hide();
+	$('#mstream_call').addClass('streamhide');
+}
+showCall = function(){
+	$("#container_call").removeClass('streamout').fadeIn(300);
+}
+toggleCall = function(type){
+	if(type == 1){
+		$("#container_call").addClass('streamout');
+		$('#mstream_call').removeClass('streamhide');
+	}
+	if(type == 2){
+		$("#container_call").removeClass('streamout');
+		$('#mstream_call').addClass('streamhide');
+	}
+}
+checkCall = function(ncall){
+	if(ncall > uCall){
+		uCall = ncall;
+		$.post('system/action/action_call.php', { 
+			acu_check_call: 1,
+			state: inCall(),
+		});	
+	}	
+}
+updateCall = function(type){
+	if($('#call_pending:visible').length){
+		$.post('system/action/action_call.php', { 
+				acu_up_call: 1,
+				id: $('#call_pending').attr('data'),
+			}, function(response) {
+				if(response.code == 0){
+					hideOver();
+				}
+		}, 'json');	
+	}
+}
+showCallError = function(id){ 
+	$.post('system/box/call_error.php', { 
+		id: id 
+	});
+}
+
+$(document).ready(function(){
+	
+	callUpdate = setInterval(updateCall, 3000);
+	callIncoming = setInterval(updateIncomingCall, 3000);
+	updateCall();
+	updateIncomingCall();
+	
+	$(document).on('click', '.opencall', function(){
+		var calluser = $(this).attr('data');
+		openCall(calluser);
+	});
+
+	$(document).on('click', '.hide_call', function(){
+		hideCall();
+	});
+
+	$(window).on("message", function(event) {
+		const e = event.originalEvent;
+		if (e.origin !== window.location.origin) {
+			return;
+		}
+		const data = e.data;
+		if (data.type === 'endCall') {
+			hideCall();
+			callendPlay();
+			if(data.code != 99){
+				showCallError(data.code);
+			}
+		}
+	});
+	
+});

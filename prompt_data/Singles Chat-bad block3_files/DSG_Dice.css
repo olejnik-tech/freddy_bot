@@ -1,0 +1,295 @@
+#dice_game,
+.die-list,
+.die-item {
+  box-sizing: unset;
+}
+
+#dice_game,
+#dice_game_pv {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.dice {
+  align-items: center;
+  display: grid;
+  grid-gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  grid-template-rows: auto;
+  justify-items: center;
+  padding: 50px;
+  perspective: 600px;
+}
+
+.die-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  height: 6rem;
+  list-style-type: none;
+  transform-style: preserve-3d;
+  width: 6rem;
+}
+
+.even-roll {
+  transition: transform 1.5s ease-out;
+}
+
+.odd-roll {
+  transition: transform 1.25s ease-out;
+}
+
+.die-item {
+  background-color: #fefefe;
+  box-shadow: inset -0.35rem 0.35rem 0.75rem rgba(0, 0, 0, 0.3),
+    inset 0.5rem -0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+  display: grid;
+  grid-column: 1;
+  grid-row: 1;
+  grid-template-areas:
+    "one two three"
+    "four five six"
+    "seven eight nine";
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  height: 100%;
+  padding: 1rem;
+  width: 100%;
+}
+
+.dot {
+  align-self: center;
+  background-color: #676767;
+  border-radius: 50%;
+  box-shadow: inset -0.15rem 0.15rem 0.25rem rgba(0, 0, 0, 0.5);
+  display: block;
+  height: 1.25rem;
+  justify-self: center;
+  width: 1.25rem;
+}
+
+.even-roll[data-roll="1"] {
+  transform: rotateX(360deg) rotateY(720deg) rotateZ(360deg);
+}
+
+.even-roll[data-roll="2"] {
+  transform: rotateX(450deg) rotateY(720deg) rotateZ(360deg);
+}
+
+.even-roll[data-roll="3"] {
+  transform: rotateX(360deg) rotateY(630deg) rotateZ(360deg);
+}
+
+.even-roll[data-roll="4"] {
+  transform: rotateX(360deg) rotateY(810deg) rotateZ(360deg);
+}
+
+.even-roll[data-roll="5"] {
+  transform: rotateX(270deg) rotateY(720deg) rotateZ(360deg);
+}
+
+.even-roll[data-roll="6"] {
+  transform: rotateX(360deg) rotateY(900deg) rotateZ(360deg);
+}
+
+.odd-roll[data-roll="1"] {
+  transform: rotateX(-360deg) rotateY(-720deg) rotateZ(-360deg);
+}
+
+.odd-roll[data-roll="2"] {
+  transform: rotateX(-270deg) rotateY(-720deg) rotateZ(-360deg);
+}
+
+.odd-roll[data-roll="3"] {
+  transform: rotateX(-360deg) rotateY(-810deg) rotateZ(-360deg);
+}
+
+.odd-roll[data-roll="4"] {
+  transform: rotateX(-360deg) rotateY(-630deg) rotateZ(-360deg);
+}
+
+.odd-roll[data-roll="5"] {
+  transform: rotateX(-450deg) rotateY(-720deg) rotateZ(-360deg);
+}
+
+.odd-roll[data-roll="6"] {
+  transform: rotateX(-360deg) rotateY(-900deg) rotateZ(-360deg);
+}
+
+[data-side="1"] {
+  transform: rotate3d(0, 0, 0, 90deg) translateZ(4rem);
+}
+
+[data-side="2"] {
+  transform: rotate3d(-1, 0, 0, 90deg) translateZ(4rem);
+}
+
+[data-side="3"] {
+  transform: rotate3d(0, 1, 0, 90deg) translateZ(4rem);
+}
+
+[data-side="4"] {
+  transform: rotate3d(0, -1, 0, 90deg) translateZ(4rem);
+}
+
+[data-side="5"] {
+  transform: rotate3d(1, 0, 0, 90deg) translateZ(4rem);
+}
+
+[data-side="6"] {
+  transform: rotate3d(1, 0, 0, 180deg) translateZ(4rem);
+}
+
+[data-side="1"] .dot:nth-of-type(1) {
+  grid-area: five;
+}
+
+[data-side="2"] .dot:nth-of-type(1) {
+  grid-area: one;
+}
+
+[data-side="2"] .dot:nth-of-type(2) {
+  grid-area: nine;
+}
+
+[data-side="3"] .dot:nth-of-type(1) {
+  grid-area: one;
+}
+
+[data-side="3"] .dot:nth-of-type(2) {
+  grid-area: five;
+}
+
+[data-side="3"] .dot:nth-of-type(3) {
+  grid-area: nine;
+}
+
+[data-side="4"] .dot:nth-of-type(1) {
+  grid-area: one;
+}
+
+[data-side="4"] .dot:nth-of-type(2) {
+  grid-area: three;
+}
+
+[data-side="4"] .dot:nth-of-type(3) {
+  grid-area: seven;
+}
+
+[data-side="4"] .dot:nth-of-type(4) {
+  grid-area: nine;
+}
+
+[data-side="5"] .dot:nth-of-type(1) {
+  grid-area: one;
+}
+
+[data-side="5"] .dot:nth-of-type(2) {
+  grid-area: three;
+}
+
+[data-side="5"] .dot:nth-of-type(3) {
+  grid-area: five;
+}
+
+[data-side="5"] .dot:nth-of-type(4) {
+  grid-area: seven;
+}
+
+[data-side="5"] .dot:nth-of-type(5) {
+  grid-area: nine;
+}
+
+[data-side="6"] .dot:nth-of-type(1) {
+  grid-area: one;
+}
+
+[data-side="6"] .dot:nth-of-type(2) {
+  grid-area: three;
+}
+
+[data-side="6"] .dot:nth-of-type(3) {
+  grid-area: four;
+}
+
+[data-side="6"] .dot:nth-of-type(4) {
+  grid-area: six;
+}
+
+[data-side="6"] .dot:nth-of-type(5) {
+  grid-area: seven;
+}
+
+[data-side="6"] .dot:nth-of-type(6) {
+  grid-area: nine;
+}
+
+@media (min-width: 900px) {
+  .dice {
+    perspective: 1200px;
+  }
+}
+
+/* Dice chat message styling */
+.dice_result_img {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin: 0 3px;
+}
+
+.dice_win_icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  margin: 0 3px;
+}
+
+.dice_amount {
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+.dice_winner {
+  color: #4CAF50;
+}
+
+.dice_loser {
+  color: #f44336;
+}
+
+/* Chat message styling */
+.dice_roll_number {
+  display: inline-block;
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--theme-color, #3498db);
+  padding: 5px 15px;
+  background: rgba(52, 152, 219, 0.2);
+  border: 2px solid var(--theme-color, #3498db);
+  border-radius: 12px;
+  margin: 0 5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.dice_chat_amount {
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.dice_chat_win {
+  color: #2ecc71;
+}
+
+.dice_chat_lose {
+  color: #e74c3c;
+}

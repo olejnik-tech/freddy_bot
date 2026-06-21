@@ -1,0 +1,439 @@
+const AV_SIZE = 1024;
+const AV_STEP = 0.08;
+const AV_HOLD_EVERY = 65;
+
+function avatarCreateState(opts = {}) {
+  const sel = {
+    fileInput:  opts.fileInput  || '#avatar_file',
+    stage:      opts.stage      || '#stage',
+    view:       opts.view       || '#view',
+    saveBtn:    opts.saveBtn    || '#saveavatar',
+    slider:     opts.slider     || '#avatar_slider',
+    sliderShow: opts.sliderShow || '#avslider',
+    chooseBtn:  opts.chooseBtn  || '#chooseImageBtn',
+    target:     opts.target     || 0,
+  };
+
+  const state = {
+    sel,
+    fileInput: document.querySelector(sel.fileInput),
+    stage:     document.querySelector(sel.stage),
+    view:      document.querySelector(sel.view),
+    exportBtn: document.querySelector(sel.saveBtn),
+
+    ctx: null,
+    SIZE: AV_SIZE,
+
+    img: new Image(),
+    hasImage: false,
+    scale: 1,
+    minScale: 1,
+    maxScale: 3,
+    offset: { x: 0, y: 0 },
+    startDrag: null,
+
+    pointers: new Map(),
+    pinchStart: null,
+
+    $avatarSlider: null,
+    minusBtn: document.getElementById('avslideup'),
+    plusBtn:  document.getElementById('avslidedown'),
+    holdTimer: null,
+
+    waitAvatar: 0,
+  };
+
+  return state;
+}
+
+function avClamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+function avEaseOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+function avatarSetupCanvas(state) {
+  const { view } = state;
+  state.ctx = view.getContext('2d');
+  view.width = state.SIZE;
+  view.height = state.SIZE;
+}
+
+function avatarGuardElements(state) {
+  const { fileInput, stage, view, exportBtn } = state;
+  return !!(fileInput && stage && view && exportBtn);
+}
+
+function avatarPreventDoubleInit(state) {
+  if (state.stage.dataset.avatarEditorInit === '1') return false;
+  state.stage.dataset.avatarEditorInit = '1';
+  return true;
+}
+
+function avatarResetCanvas(state) {
+  state.ctx.clearRect(0, 0, state.SIZE, state.SIZE);
+  state.view.width = state.view.width;
+}
+
+function avatarDestroy(state) {
+  avatarUnbindUI(state);
+  avatarResetCanvas(state);
+
+  $(state.sel.sliderShow).addClass('fhide');
+
+  state.stage.removeAttribute('data-avatar-editor-init');
+  delete state.stage.dataset.avatarEditorInit;
+}
+
+function avatarComputeMinScale(state) {
+  const { img, SIZE } = state;
+  if (!img.naturalWidth) return 1;
+  const sw = img.naturalWidth, sh = img.naturalHeight;
+  return Math.max(SIZE / sw, SIZE / sh);
+}
+
+function avatarEnsureInside(state) {
+  const { img, scale, SIZE } = state;
+  const iw = img.naturalWidth * scale;
+  const ih = img.naturalHeight * scale;
+  const bleed = 40;
+  const minX = -(iw - SIZE) / 2 - bleed;
+  const maxX = (iw - SIZE) / 2 + bleed;
+  const minY = -(ih - SIZE) / 2 - bleed;
+  const maxY = (ih - SIZE) / 2 + bleed;
+  state.offset.x = avClamp(state.offset.x, -maxX, -minX);
+  state.offset.y = avClamp(state.offset.y, -maxY, -minY);
+}
+
+function avatarCanvasToImage(state, cx, cy) {
+  const { img, scale, SIZE, offset } = state;
+  const iw = img.naturalWidth * scale;
+  const ih = img.naturalHeight * scale;
+  const x = cx - (SIZE - iw) / 2 - offset.x;
+  const y = cy - (SIZE - ih) / 2 - offset.y;
+  return { x: x / scale, y: y / scale };
+}
+
+function avatarSetScale(state, newScale, pivotCanvasX, pivotCanvasY) {
+  if (!state.hasImage) return;
+  const s = avClamp(newScale, state.minScale, state.maxScale);
+  const pre = avatarCanvasToImage(state, pivotCanvasX, pivotCanvasY);
+  state.scale = s;
+  avatarEnsureInside(state);
+  const post = avatarCanvasToImage(state, pivotCanvasX, pivotCanvasY);
+  state.offset.x += (post.x - pre.x) * state.scale;
+  state.offset.y += (post.y - pre.y) * state.scale;
+  avatarEnsureInside(state);
+  avatarDraw(state);
+
+  if (state.$avatarSlider && state.$avatarSlider.hasClass('ui-slider')) {
+    state.$avatarSlider.slider('value', +state.scale.toFixed(2));
+  }
+}
+
+function avatarAnimateToScale(state, target, opts = {}) {
+  if (!state.hasImage) return;
+  const duration = opts.duration ?? 180;
+  const pivotX = opts.pivotX ?? state.SIZE / 2;
+  const pivotY = opts.pivotY ?? state.SIZE / 2;
+
+  const start = performance.now();
+  const from = state.scale;
+  const to = avClamp(target, state.minScale, state.maxScale);
+
+  if (Math.abs(to - from) < 0.0001) {
+    if (state.$avatarSlider && state.$avatarSlider.hasClass('ui-slider')) {
+      state.$avatarSlider.slider('value', +to.toFixed(2));
+    }
+    return;
+  }
+
+  let rafId = 0;
+  const tick = (now) => {
+    const t = avClamp((now - start) / duration, 0, 1);
+    const s = from + (to - from) * avEaseOutCubic(t);
+    avatarSetScale(state, s, pivotX, pivotY);
+    if (t < 1) {
+      rafId = requestAnimationFrame(tick);
+    } else {
+      cancelAnimationFrame(rafId);
+      avatarUpdateButtonsState(state);
+    }
+  };
+  rafId = requestAnimationFrame(tick);
+}
+
+function avatarDrawBackground(state) {
+  const { ctx, SIZE } = state;
+  ctx.clearRect(0, 0, SIZE, SIZE);
+  const grid = 32;
+  for (let y = 0; y < SIZE; y += grid) {
+    for (let x = 0; x < SIZE; x += grid) {
+      ctx.fillStyle = ((x + y) / grid) % 2 ? '#f8f8f8' : '#eeeeee';
+      ctx.fillRect(x, y, grid, grid);
+    }
+  }
+}
+
+function avatarDrawImage(state) {
+  const { ctx, img, scale, offset, SIZE } = state;
+  const iw = img.naturalWidth;
+  const ih = img.naturalHeight;
+  const w = iw * scale;
+  const h = ih * scale;
+  const x = offset.x + (SIZE - w) / 2;
+  const y = offset.y + (SIZE - h) / 2;
+  ctx.clearRect(0, 0, SIZE, SIZE);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, x, y, w, h);
+}
+
+function avatarDraw(state) {
+  if (!state.hasImage) avatarDrawBackground(state);
+  else avatarDrawImage(state);
+}
+
+function avatarUpdateButtonsState(state){
+  if (!state.hasImage) {
+    state.minusBtn?.setAttribute('disabled', 'disabled');
+    state.plusBtn?.setAttribute('disabled', 'disabled');
+    return;
+  }
+  if (state.minusBtn) {
+    if (state.scale <= state.minScale + 0.0001) state.minusBtn.setAttribute('disabled','disabled');
+    else state.minusBtn.removeAttribute('disabled');
+  }
+  if (state.plusBtn) {
+    if (state.scale >= state.maxScale - 0.0001) state.plusBtn.setAttribute('disabled','disabled');
+    else state.plusBtn.removeAttribute('disabled');
+  }
+}
+
+function avatarInitOrUpdateSlider(state) {
+  state.$avatarSlider = $(state.sel.slider);
+  const opts = {
+    min: +state.minScale.toFixed(2),
+    max: +state.maxScale.toFixed(2),
+    step: 0.01,
+    value: +state.scale.toFixed(2),
+    range: 'min',
+    slide: (_e, ui) => { avatarSetScale(state, ui.value, state.SIZE/2, state.SIZE/2); avatarUpdateButtonsState(state); },
+    stop:  (_e, ui) => { avatarSetScale(state, ui.value, state.SIZE/2, state.SIZE/2); avatarUpdateButtonsState(state); }
+  };
+
+  if (state.$avatarSlider.hasClass('ui-slider')) {
+    state.$avatarSlider.slider('option', opts);
+  } else {
+    state.$avatarSlider.slider(opts);
+  }
+  $(state.sel.sliderShow).removeClass('fhide');
+}
+
+function avatarLoadFile(state, file) {
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const newImg = new Image();
+  newImg.onload = () => {
+    URL.revokeObjectURL(url);
+    state.img = newImg;
+    state.hasImage = true;
+    state.minScale = avatarComputeMinScale(state);
+    state.scale = state.minScale;
+    state.maxScale = Math.max(state.minScale * 3, 3);
+    state.offset = { x: 0, y: 0 };
+    avatarDraw(state);
+    state.exportBtn.disabled = false;
+    avatarInitOrUpdateSlider(state);
+    avatarUpdateButtonsState(state);
+  };
+  newImg.src = url;
+}
+
+function avatarOnFileChange(state, e) {
+  const f = e.target.files && e.target.files[0];
+  if (f) avatarLoadFile(state, f);
+}
+
+function avatarOnPointerDown(state, e) {
+  if (!state.hasImage) return;
+  state.stage.setPointerCapture(e.pointerId);
+  state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (state.pointers.size === 1) {
+    state.startDrag = { x: e.clientX, y: e.clientY, ox: state.offset.x, oy: state.offset.y };
+  } else if (state.pointers.size === 2) {
+    const pts = [...state.pointers.values()];
+    state.pinchStart = { d: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y), scale: state.scale };
+  }
+}
+
+function avatarOnPointerMove(state, e) {
+  if (!state.pointers.has(e.pointerId)) return;
+  state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if (state.pointers.size === 1 && state.startDrag) {
+    const dx = e.clientX - state.startDrag.x;
+    const dy = e.clientY - state.startDrag.y;
+    state.offset.x = state.startDrag.ox + dx;
+    state.offset.y = state.startDrag.oy + dy;
+    avatarEnsureInside(state);
+    avatarDraw(state);
+  } else if (state.pointers.size === 2 && state.pinchStart) {
+    const pts = [...state.pointers.values()];
+    const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    const factor = d / (state.pinchStart.d || d);
+    avatarSetScale(state, state.pinchStart.scale * factor, state.SIZE / 2, state.SIZE / 2);
+    avatarUpdateButtonsState(state);
+  }
+}
+
+function avatarOnPointerUp(state, e) {
+  state.pointers.delete(e.pointerId);
+  if (state.pointers.size < 2) state.pinchStart = null;
+  if (state.pointers.size === 0) state.startDrag = null;
+}
+
+function avatarOnPointerCancel(state, e) {
+  state.pointers.delete(e.pointerId);
+  state.pinchStart = null; 
+  state.startDrag = null;
+}
+
+function avatarOnWheel(state, e) {
+  if (!state.hasImage) return;
+  e.preventDefault();
+  const rect = state.stage.getBoundingClientRect();
+  const cx = (e.clientX - rect.left) * (state.SIZE / rect.width);
+  const cy = (e.clientY - rect.top) * (state.SIZE / rect.height);
+  const delta = Math.sign(e.deltaY) * -0.08;
+  avatarSetScale(state, state.scale * (1 + delta), cx, cy);
+  avatarUpdateButtonsState(state);
+}
+
+function avatarNudge(state, dir) {
+  if (!state.hasImage) return;
+  const target = state.scale + (dir * AV_STEP);
+  avatarAnimateToScale(state, target, { pivotX: state.SIZE/2, pivotY: state.SIZE/2 });
+}
+
+function avatarStartHold(state, dir) {
+  if (state.holdTimer) return;
+  avatarNudge(state, dir);
+  state.holdTimer = setInterval(() => avatarNudge(state, dir), AV_HOLD_EVERY);
+}
+
+function avatarEndHold(state) {
+  if (state.holdTimer) { clearInterval(state.holdTimer); state.holdTimer = null; }
+}
+
+function avatarExportSquareJPEG(state) {
+  return new Promise(res => state.view.toBlob(res, 'image/jpeg', 0.92));
+}
+
+function avatarSaveCropped(state, e) {
+  if (e && e.preventDefault) e.preventDefault();
+  if (state.waitAvatar) return false;
+
+  avatarExportSquareJPEG(state).then(function(blob){
+    if (!blob) { return; }
+
+    state.waitAvatar = 1;
+
+    const form_data = new FormData();
+    form_data.append('file', blob, 'avatar.jpg');
+
+    if (state.sel.target > 0) {
+		form_data.append('svs_avatar', 1);
+		form_data.append('target', state.sel.target);
+	}
+    else {
+		form_data.append('svu_avatar', 1);
+	}
+
+    form_data.append('token', typeof utk !== 'undefined' ? utk : '');
+    if (typeof curPage !== 'undefined') form_data.append('cp', curPage);
+
+    $.ajax({
+      url: "system/action/avatar.php",
+      dataType: 'json',
+      cache: false,
+      contentType: false,
+      processData: false,
+      data: form_data,
+      type: 'post',
+      success: function (response) {
+        state.waitAvatar = 0;
+      },
+      error: function () {
+        state.waitAvatar = 0;
+      }
+    });
+  });
+
+  return false;
+}
+
+function avatarBindUI(state) {
+
+  $(state.sel.chooseBtn).on('click.avatarEditor', () => {
+    const el = document.querySelector(state.sel.fileInput);
+    if (el) el.click();
+  });
+
+  state.fileInput.addEventListener('change', (e)=> avatarOnFileChange(state, e));
+
+  state.stage.addEventListener('pointerdown', (e)=> avatarOnPointerDown(state, e));
+  state.stage.addEventListener('pointermove', (e)=> avatarOnPointerMove(state, e));
+  state.stage.addEventListener('pointerup', (e)=> avatarOnPointerUp(state, e));
+  state.stage.addEventListener('pointercancel', (e)=> avatarOnPointerCancel(state, e));
+  state.stage.addEventListener('wheel', (e)=> avatarOnWheel(state, e), { passive: false });
+
+  $(state.sel.saveBtn).on('click.avatarEditor', (e)=> avatarSaveCropped(state, e));
+
+  state.minusBtn?.addEventListener('click', (e)=>{ e.preventDefault(); avatarNudge(state, -1); });
+  state.plusBtn?.addEventListener('click',  (e)=>{ e.preventDefault(); avatarNudge(state, +1); });
+
+  ['mousedown','touchstart'].forEach(ev => {
+    state.minusBtn?.addEventListener(ev, (e)=>{ e.preventDefault(); avatarStartHold(state, -1); });
+    state.plusBtn?.addEventListener(ev,  (e)=>{ e.preventDefault(); avatarStartHold(state, +1); });
+  });
+  ['mouseup','mouseleave','touchend','touchcancel'].forEach(ev => {
+    state.minusBtn?.addEventListener(ev, ()=> avatarEndHold(state));
+    state.plusBtn?.addEventListener(ev,  ()=> avatarEndHold(state));
+  });
+}
+
+function avatarUnbindUI(state) {
+  try {
+    $(state.sel.saveBtn).off('.avatarEditor');
+    $(state.sel.chooseBtn).off('.avatarEditor');
+
+    state.fileInput.removeEventListener('change', (e)=> avatarOnFileChange(state, e));
+    state.stage.removeEventListener('pointerdown', (e)=> avatarOnPointerDown(state, e));
+    state.stage.removeEventListener('pointermove', (e)=> avatarOnPointerMove(state, e));
+    state.stage.removeEventListener('pointerup', (e)=> avatarOnPointerUp(state, e));
+    state.stage.removeEventListener('pointercancel', (e)=> avatarOnPointerCancel(state, e));
+    state.stage.removeEventListener('wheel', (e)=> avatarOnWheel(state, e));
+
+    if (state.$avatarSlider && state.$avatarSlider.hasClass('ui-slider')) {
+      try { state.$avatarSlider.slider('destroy'); } catch (_) {}
+    }
+  } catch (_) {}
+}
+
+function initAvatarEditor(opts = {}) {
+  const state = avatarCreateState(opts);
+
+  if (!avatarGuardElements(state)) {
+    return { destroy(){ } };
+  }
+  if (!avatarPreventDoubleInit(state)) {
+    return { destroy(){ } };
+  }
+
+  avatarSetupCanvas(state);
+  avatarDraw(state);
+  state.exportBtn.disabled = true;
+  avatarUpdateButtonsState(state);
+  avatarBindUI(state);
+
+  return {
+    destroy() { avatarDestroy(state); }
+  };
+}

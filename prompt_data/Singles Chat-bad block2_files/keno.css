@@ -1,0 +1,13 @@
+.keno_grid { display: grid; grid-template-columns: repeat(10, 1fr); width: 100%; background:#444; color:#fff; overflow:hidden; }
+.keno_pick { background:#777; }
+.keno_sel { background:#03add8; }
+.keno_good { background:#74b20e; }
+.keno_number { display: flex; justify-content: center; align-items: center; border: 1px solid black; padding: 5px; cursor: pointer; }
+.keno_spacer { width:10px; }
+.keno_control, .keno_top { background:#222; color:#fff; }
+.keno_plus, .keno_minus { width:36px; font-size:13px; cursor:pointer; }
+.keno_betting { width:50px; padding:5px; }
+.keno_clear { width:40px; }
+.kodds { font-size:16px; }
+.keno_help { width:20px; text-align:center; cursor:pointer; }
+.keno_list { list-style: disc; margin-left: 20px; padding-left: 0; }  

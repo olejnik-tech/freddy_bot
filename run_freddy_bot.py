@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parent
 SRC = ROOT / "src"
 sys.path.insert(0, str(SRC))
 
-from freddy_bot.chat_watcher import main  # noqa: E402
+from freddy_bot.cli import main  # noqa: E402
 
 
 if __name__ == "__main__":

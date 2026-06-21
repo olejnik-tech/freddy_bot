@@ -1,0 +1,180 @@
+// add css
+var s = document.getElementsByTagName('script');
+var scriptPath;
+for (var i = 0; i < s.length; i++) {
+    if (s[i].src.indexOf('coo-widget.js') > 0) {
+        scriptPath = s[i].src.split('coo-widget.js')[0];
+    }
+}
+
+var hideIcon = scriptPath+'c-hide.svg';
+var closeIcon = scriptPath+'c-close.svg';
+var logoIcon = scriptPath+'c-logo.svg';
+
+var cooCss = '@import url(\'https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap\'); .coo-widget { position: fixed; width: 45px; height: 166px; right: 0; top: 90px; z-index: 666; } .coo-widget.--hide-btn {width: 0;} .coo-widget.--hide-btn #coo-wHide, .coo-widget.--hide-btn #coo-wOpen{ display: none !important; } .coo-widget.--hide-btn .coo-widget__over{ transition: all 0s ease-out; } .coo-widget__over { position: fixed; width: 100%; height: 580px; top: 50%; margin-top: -285px; transform: translateX(100%); opacity: 0; visibility: hidden; transition: all 0.3s ease-out; } #coomeet_container { border-radius: 8px; box-shadow: 0 24px 50px -10px rgba(24, 35, 55, 0.06), 0 1px 4px rgba(24, 35, 55, 0.04), 0 20px 60px rgba(24, 35, 55, 0.08); overflow: hidden; max-width: 780px; max-height: 580px; } #coo-wHide { position: absolute; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; top: 4px; right: 4px; background: rgba(255, 255, 255, 1) url('+hideIcon+') no-repeat 5px 5px; background-size: 10px; z-index: 50; } .coo-widget__btn a {font-family: \'Roboto\', sans-serif !important; white-space: nowrap; color: #fff; font-weight: bold; font-size: 12px; text-decoration: none! important; padding: 12px 16px 8px 40px; position: relative; top: 12px;} .coo-widget__btn { font-family: \'Roboto\', sans-serif !important; position: absolute; transform: rotate(-90deg); width: auto; white-space: nowrap; height: 32px; right: -46px; bottom: 55px; cursor: pointer; padding: 0; color: #fff; font-weight: bold; font-size: 12px; line-height: 12px; border-radius: 20px 20px 0 0; background: linear-gradient(268.68deg, rgba(255, 255, 255, 0.13) 3.21%, rgba(255, 255, 255, 0) 6.36%), linear-gradient(180deg, rgba(0, 0, 0, 0.49) 0%, rgba(203, 203, 203, 0.49) 32.29%, rgba(255, 255, 255, 0.49) 51.56%, rgba(203, 203, 203, 0.49) 71.35%, rgba(0, 0, 0, 0.49) 100%), #182337; background-blend-mode: overlay, overlay, normal; box-shadow: 0 0 6px rgba(30, 30, 30, 0.64), inset 0 0 3px rgba(0, 0, 0, 0.26); z-index: 55; user-select: none; transition: all 0.3s ease-out; } .coo-widget__btn:before { content: \'\'; position: absolute; background: #1CA5FC url('+logoIcon+') no-repeat center; border-radius: 40px 40px 0 40px; width: 32px; height: 32px; transform: rotate(90deg); top: 0; left: -2px; pointer-events: none;} .coo-widget.--open { width: 100%; -webkit-overflow-scrolling: touch; } .coo-widget.--open .coo-widget__over { transform: translateX(0); opacity: 1; visibility: visible; } .coo-widget.--open #coomeet_container { margin: auto; } .coo-widget.--open:after { content: \'\'; top: 0; left: 0; position: fixed; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: -1; } #coo-wClose { position: absolute; cursor: pointer; width: 12px; height: 12px; top: -24px; right: 50%; margin-right: -350px; z-index: 55; background: url('+closeIcon+') no-repeat center; } @media screen and (max-height: 590px) { .coo-widget.--open { width: 100%; overflow: auto; overflow-x: hidden; height: 95% !important; top: 10px !important; position: fixed !important; } .coo-widget.--open .coo-widget__over { position: absolute; top: 35px; margin-top: 0; } } @media screen and (max-width: 840px) { .coo-widget { top: 60px; overflow: hidden; } #coomeet_container { width: 100% !important; border-radius: 0; height: calc(var(--mvh, 1vh) * 100 - 35px) !important; max-height: none; min-height: 627px; } .coo-widget.--open { position: fixed !important; top: 0 !important; height: calc(var(--mvh, 1vh) * 100) !important; overflow-x: hidden; overflow-y: auto; } .coo-widget.--open .coo-widget__btn { visibility: hidden; right: -100px !important; } .coo-widget.--open #coo-wHide { display: none; } .coo-widget__over { position: absolute; margin-top: 0; top: 35px; height: calc(var(--mvh, 1vh) * 100 - 35px) !important; } #coo-wClose { top: -23px; right: 18px; margin-right: 0; } } .coo-widget.--left { right: auto; left: 0; } .coo-widget.--left .coo-widget__btn { right: auto; left: -47px; border-radius: 0 0 20px 20px; line-height: 10px; } .coo-widget.--left .coo-widget__over { transform: translateX(-100%); } .coo-widget.--left.--open .coo-widget__over { transform: translateX(0); } .coo-widget.--left .coo-widget__btn:before { border-radius: 40px 40px 40px 0; } .coo-widget.--left #coo-wHide { right: 20px; } .coo-widget.--left.--open  .coo-widget__btn { right: auto; left: -47px; } @media screen and (max-width: 840px) { .coo-widget.--left.--open .coo-widget__btn { left: -100px !important; right: auto !important; } }',
+    head = document.head || document.getElementsByTagName('head')[0],
+    style = document.createElement('style');
+
+head.appendChild(style);
+
+style.type = 'text/css';
+if (style.styleSheet) {
+    style.styleSheet.cssText = cooCss;
+} else {
+    style.appendChild(document.createTextNode(cooCss));
+}
+
+// create html
+var cooWidget, cooWidgetBtn, cooWidgetOver, cooWidgetClose, cooWidgetApp;
+cooWidget = document.createElement('div');
+cooWidget.classList.add('coo-widget');
+cooWidget.id = 'coo-wMain';
+
+cooWidgetBtn = document.createElement('div');
+cooWidgetBtn.classList.add('coo-widget__btn');
+cooWidgetBtn.id = 'coo-wOpen';
+cooWidgetBtn.textContent = 'VIDEO CHAT'
+
+cooWidgetOver = document.createElement('div');
+cooWidgetOver.classList.add('coo-widget__over');
+
+cooWidgetClose = document.createElement('div');
+cooWidgetClose.id = 'coo-wClose';
+
+cooWidgetHide = document.createElement('div');
+cooWidgetHide.id = 'coo-wHide';
+
+cooWidgetApp = document.createElement('div');
+cooWidgetApp.id = 'coomeet_container';
+
+// added markup
+cooWidgetOver.append(cooWidgetApp);
+cooWidgetOver.append(cooWidgetClose);
+cooWidget.append(cooWidgetHide);
+cooWidget.append(cooWidgetBtn);
+cooWidget.append(cooWidgetOver);
+document.body.append(cooWidget);
+
+var noApp = false;
+
+if (_coomeet.widget) {
+    if (_coomeet.widget.hideWidget) {
+        cooWidget.classList.add('--hide-btn');
+    }
+
+    if (_coomeet.widget.link) {
+        cooWidgetLink = document.createElement('a');
+        cooWidgetLink.id = 'coo-WLink';
+        cooWidgetLink.target = '_blank';
+        cooWidgetLink.href = _coomeet.widget.link;
+        cooWidgetLink.textContent = 'VIDEO CHAT';
+        cooWidgetBtn.textContent = '';
+        cooWidgetBtn.append(cooWidgetLink);
+        noApp = true;
+    }
+}
+
+window.addEventListener("load", function () {
+    if (_coomeet.widget) {
+        if (_coomeet.widget.position == 'left') {
+            cooWidget.classList.add('--left');
+        }
+
+        if (_coomeet.widget.verticalPosition) {
+            cooWidget.style.top = _coomeet.widget.verticalPosition;
+        }
+
+        if (_coomeet.widget.verticalStatic) {
+            cooWidget.style.position = "absolute";
+        }
+
+        if (_coomeet.widget.text) {
+            if (_coomeet.widget.link) {
+                cooWidgetLink.textContent = _coomeet.widget.text;
+            } else {
+                cooWidgetBtn.textContent = _coomeet.widget.text;
+            }
+
+            cooWidget.style.height = cooWidgetBtn.offsetWidth + 36 +'px';
+            cooWidgetBtn.style.bottom = (cooWidgetBtn.offsetWidth / 2) -10 +'px';
+            var tt = (cooWidgetBtn.offsetWidth / 2) -18;
+            if (_coomeet.widget.position == 'left') {
+                cooWidgetBtn.style.left = '-'+tt+'px';
+            } else {
+                cooWidgetBtn.style.right = '-'+tt+'px';
+            }
+        }
+
+        if (_coomeet.widget.btnPosition) {
+            if (_coomeet.widget.position == 'left') {
+                cooWidgetBtn.style.left = _coomeet.widget.btnPosition;
+            } else {
+                cooWidgetBtn.style.right = _coomeet.widget.btnPosition;
+            }
+        }
+    }
+
+    //mobile height
+    var mvh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--mvh', `${mvh}px`);
+
+    window.addEventListener('resize', function () {
+        mvh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--mvh', `${mvh}px`);
+    });
+
+    document.getElementById("coo-wHide").onclick = function () {
+        cooWidget.classList.add('--hide-btn');
+    };
+
+    if (noApp) {
+        document.getElementById("coo-wOpen").onclick = function () {
+            //cooWidgetLink.click();
+        };
+        throw new Error("everything is fine, the widget just works in link mode");
+    }
+
+    // init app
+    (function () {
+        var coomeet = document.createElement('script');
+        coomeet.type = 'text/javascript';
+        coomeet.async = true;
+        coomeet.src = 'https://iframe.coomeet.com/js/code.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(coomeet, s);
+    })();
+
+    // widget management
+    document.getElementById("coo-wOpen").onclick = function () {
+        cooWidget.classList.toggle('--open');
+        if (cooWidget.classList.contains('--open')) {
+            document.body.style.overflow = "hidden";
+            document.body.style.touchAction = "none";
+            cooWidgetHide.style.display = "none";
+        } else {
+            document.body.style.overflow = "inherit";
+            document.body.style.touchAction = "inherit";
+            cooWidgetHide.style.display = "block";
+        }
+    };
+    document.getElementById("coo-wClose").onclick = function () {
+        cooWidget.classList.toggle('--open');
+        document.body.style.overflow = "inherit";
+        document.body.style.touchAction = "inherit";
+        cooWidgetHide.style.display = "block";
+    };
+
+    var elements = document.getElementsByClassName("coo-show-app");
+
+    function showApp(evt) {
+        evt.preventDefault();
+        cooWidget.classList.toggle('--open');
+        document.body.style.overflow = "hidden";
+        document.body.style.touchAction = "none";
+        cooWidgetHide.style.display = "none";
+    }
+
+    for (var i = 0; i < elements.length; i++) {
+        elements[i].addEventListener('click', showApp, false);
+    }
+});
